@@ -1,6 +1,7 @@
 <template>
-    <common-form ref="menuForm" :target-data="menuData" :template-data="templateData" :rules="rules" @save="saveMenu"
-                 @cancel="cancelSave" />
+    <common-form ref="menuForm" :rules="rules" :target-data="menuData" :template-data="templateData"
+                 @cancel="cancelSave"
+                 @save="saveMenu" />
 </template>
 
 <script>
@@ -12,6 +13,22 @@ export default {
     data: function() {
         return {
             templateData: [
+                {
+                    key: 'modelData', val: '模板', type: 'model', data: [
+                        {
+                            name: '查看权限',
+                            icon: 'el-icon-view',
+                            isShow: false,
+                            sort: 30
+                        },
+                        {
+                            name: '编辑权限',
+                            icon: 'el-icon-edit',
+                            isShow: false,
+                            sort: 60
+                        }
+                    ]
+                },
                 { key: 'parentId', val: '上级菜单', type: 'selectTree', data: [] },
                 { key: 'name', val: '名称', type: 'text' },
                 { key: 'href', val: '链接', type: 'text' },
@@ -100,8 +117,8 @@ export default {
                 children: []
             };
             root.children = this.treeData;
-            this.templateData[0].data = [];
-            this.templateData[0].data.push(root);
+            this.templateData.filter(temp => temp.key === 'parentId')[0].data = [];
+            this.templateData.filter(temp => temp.key === 'parentId')[0].data.push(root);
         },
         resetForm() {
             if (this.$refs['menuForm']) {
@@ -111,6 +128,11 @@ export default {
     },
     created() {
         this.handleTreeData();
+    },
+    watch: {
+        treeData(val) {
+            this.handleTreeData();
+        }
     }
 };
 </script>

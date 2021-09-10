@@ -1,11 +1,14 @@
-import { login, getMenuList, menuList, roleAllList, areaList, getUserNameById, dictAllList } from 'api/system';
+import { areaList, dictAllList, getMenuList, getUserNameById, login, menuList, roleAllList } from 'api/system';
 import { Message } from 'element-ui';
+import CommonUtils from 'utils/CommonUtils';
+import router from '../../router';
 
 export default {
     namespaced: true,
     state: {
         token: localStorage.getItem('auth_token') || '',
         user: JSON.parse(localStorage.getItem('user_data')) || null,
+        permissionList: JSON.parse(localStorage.getItem('permission_list')) || null,
         menuList: JSON.parse(localStorage.getItem('menu_list')) || null,
         allMenuList: [],
         allRoleList: [],
@@ -13,9 +16,15 @@ export default {
         allDictList: JSON.parse(localStorage.getItem('dict_list')) || null,
         userNameList: [],
         loading: false,
-        menuName: ''
+        menuName: '',
+        headerIndex: localStorage.getItem('header_index') || '1',
+        baseDeptIds: { rootId: '1', deptParentId: '4294967295' }
     },
     mutations: {
+        setHeaderIndex(state, data) {
+            state.headerIndex = data;
+            localStorage.setItem('header_index', data);
+        },
         setMenuName(state, data) {
             state.menuName = data;
         },
@@ -42,6 +51,13 @@ export default {
             state.menuList = data;
             localStorage.setItem('menu_list', JSON.stringify(data));
         },
+        setPermissionList(state, data) {
+            state.user.roleList.forEach(role => {
+                data.push.apply(data, role.menuList.map(menu => menu.permission));
+            });
+            state.permissionList = data;
+            localStorage.setItem('permission_list', JSON.stringify(data));
+        },
         setAllMenuList(state, data) {
             state.allMenuList = data;
         },
@@ -55,15 +71,26 @@ export default {
             state.allDictList = data;
             localStorage.setItem('dict_list', JSON.stringify(data));
         },
+        cleanUser(state) {
+            state.token = null;
+            state.user = null;
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_data');
+        },
         cleanCache(state) {
             state.token = null;
             state.user = null;
             state.menuList = null;
+            state.permissionList = null;
             state.allDictList = null;
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user_data');
             localStorage.removeItem('menu_list');
+            localStorage.removeItem('permission_list');
+            localStorage.removeItem('current_exam_id');
+            localStorage.removeItem('current_exam');
             localStorage.removeItem('dict_list');
+            state.headerIndex = '1';
         },
         cleanDict(state) {
             state.allDictList = null;
@@ -71,52 +98,72 @@ export default {
         }
     },
     actions: {
-        async login(state, data) {
-            let flag = false;
-            await login(data).then(ret => {
-                if (ret.code == 1) {
-                    Message({ message: '登录成功', type: 'success' });
-                    state.commit('setUser', ret.result);
-                    flag = true;
-                } else {
-                    Message({ message: ret.msg, type: 'error' });
-                }
-            }).catch(err => {
-                console.log(err);
-                Message({ message: '登入异常', type: 'error' });
+        toIndex({ state }, data) {
+            router.replace(CommonUtils.getFirstPath(state.menuList)).then(r => {
             });
-            return flag;
         },
-        async loadMenu(state) {
-            let menuList = state.state.menuList;
-            if (!menuList) {
-                await getMenuList().then(ret => {
+        login(state, data) {
+            return new Promise((resolve, reject) => {
+                login(data).then(ret => {
+                    state.commit('cleanCache');
                     if (ret.code == 1) {
+                        state.commit('setUser', ret.result);
+                        state.dispatch('loadMenu').then(_ => {
+                            Message({ message: '登录成功', type: 'success' });
+                            resolve(true);
+                            router.replace(CommonUtils.getFirstPath(_)).then(r => {
+                            });
+                        });
+                    } else {
+                        Message({ message: ret.msg, type: 'error' });
+                        resolve(false);
+                    }
+                }).catch(err => {
+                    console.log(err);
+                    Message({ message: '登入异常', type: 'error' });
+                    reject(err);
+                });
+            });
+        },
+        async loadMenu(state, data) {
+            let menuList = [];
+            await getMenuList(data || {}).then(ret => {
+                if (ret.code === '1') {
+                    if (ret.result) {
                         menuList = ret.result;
+                        let permissionList = [];
                         let func = function(list) {
-                            for (let ind = list.length - 1; ind >= 0; ind--) {
-                                if (list[ind].children && list[ind].children.length > 0) {
-                                    func(list[ind].children);
-                                    if (list[ind].children.length == 0) {
-                                        delete list[ind].children;
+                            if (list && list.length > 0) {
+                                for (let ind = list.length - 1; ind >= 0; ind--) {
+                                    if (list[ind].children && list[ind].children.length > 0) {
+                                        func(list[ind].children);
+                                        if (list[ind].children.length == 0) {
+                                            delete list[ind].children;
+                                        }
                                     }
-                                }
-                                if (list[ind].isShow == '0') {
-                                    list.splice(ind, 1);
+                                    if (list[ind].permission) {
+                                        permissionList.push(list[ind].permission);
+                                    }
+                                    if (list[ind].isShow == '0') {
+                                        list.splice(ind, 1);
+                                    }
                                 }
                             }
                             return list;
                         };
                         state.commit('setMenuList', func(menuList));
+                        state.commit('setPermissionList', permissionList);
+                        state.dispatch('requestDictList');
                     } else {
-                        Message({ message: ret.msg, type: 'error' });
+                        Message.warning('您暂无权限进入');
                     }
-                }).catch(err => {
-                    console.log(err);
-                    Message({ message: '获取菜单异常', type: 'error' });
-                });
-            }
-            await state.dispatch('requestDictList');
+                } else {
+                    Message({ message: ret.msg, type: 'error' });
+                }
+            }).catch(err => {
+                console.log(err);
+                Message({ message: '获取菜单异常', type: 'error' });
+            });
             return menuList;
         },
         requestDictList(state) {
@@ -139,17 +186,19 @@ export default {
                 }
             });
         },
-        requestMenuList({ commit }) {
+        requestMenuList({ commit }, data) {
             return new Promise((resolve, reject) => {
-                menuList({}).then(ret => {
+                menuList(data).then(ret => {
                     if (ret.code == 1) {
                         if (ret['result'] && ret.result.length > 0) {
                             commit('setAllMenuList', ret.result);
                             resolve(ret);
                         } else {
                             Message.warning('菜单列表为空');
+                            resolve({ result: [] });
                         }
                     } else {
+                        resolve({ result: [] });
                         Message.warning('获取菜单列表失败');
                     }
                 }).catch(err => {

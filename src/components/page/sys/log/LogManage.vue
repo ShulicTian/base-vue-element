@@ -37,7 +37,7 @@ import CommonTable from 'components/common/CommonTable';
 import CommonTableFilter from 'components/common/CommonTableFilter';
 
 export default {
-    name: 'LogManager',
+    name: 'LogManage',
     components: { CommonTable, CommonTableFilter },
     data: function() {
         return {
@@ -49,14 +49,14 @@ export default {
                 { key: 'requestUri', val: 'URI' },
                 { key: 'method', val: '提交方式' },
                 { key: 'remoteAddr', val: 'IP' },
-                { key: 'createDate', val: '操作时间', type: 'date' }
+                { key: 'createDate', val: '操作时间', type: 'datetime' }
             ],
             filterTemplateData: [
-                { key: 'createDate', val: '日期', type: 'date' },
+                { key: 'createDate', val: '日期', type: 'datetime' },
                 { key: 'createBy', val: '用户ID', type: 'text' },
                 {
                     key: 'actives', val: '', data: [
-                        { name: '查询', eventName: 'search', type: 'primary' }
+                        { name: '查询', eventName: 'search', type: 'primary', permission: 'sys:log:view' }
                     ], type: 'button'
                 }
             ],

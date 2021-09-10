@@ -12,7 +12,7 @@
         >
             <template v-for="item in menuList">
                 <template v-if="item.children">
-                    <el-submenu :index="item.href" :key="item.href">
+                    <el-submenu :index="item.id+item.href" :key="item.id+item.href">
                         <template slot="title">
                             <i :class="item.icon"></i>
                             <span slot="title">{{ item.name }}</span>
@@ -20,16 +20,20 @@
                         <template v-for="subItem in item.children">
                             <el-submenu
                                 v-if="subItem.children"
-                                :index="subItem.href"
-                                :key="subItem.href">
+                                :index="subItem.id+subItem.href"
+                                :key="subItem.id+subItem.href">
                                 <template slot="title">
-                                    {{ subItem.name }}
+                                    <i :class="subItem.icon"></i>
+                                    <span slot="title">{{ subItem.name }}</span>
                                 </template>
                                 <el-menu-item
                                     v-for="(threeItem,i) in subItem.children"
-                                    :key="i"
+                                    :key="threeItem.href"
                                     :index="threeItem.href">
-                                    {{ threeItem.name }}
+                                    <template slot="title">
+                                        <i :class="threeItem.icon"></i>
+                                        <span slot="title">{{ threeItem.name }}</span>
+                                    </template>
                                 </el-menu-item>
                             </el-submenu>
                             <template v-else>
@@ -65,7 +69,7 @@ export default {
     computed: {
         onRoutes() {
             this.$store.commit('system/setMenuName', this.$route.meta.title || null);
-            return this.$route.path.replace('/', '');
+            return '/' + this.$route.path.replace('/', '');
         },
         ...mapState({
             menuList: state => state.system.menuList
@@ -78,7 +82,6 @@ export default {
             this.collapse = msg;
             bus.$emit('collapse-content', msg);
         });
-        this.$store.dispatch('system/loadMenu');
     }
 };
 </script>

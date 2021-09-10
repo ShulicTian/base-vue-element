@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { register, isExist } from 'api/system';
+import { isExist, register } from 'api/system';
 
 export default {
     data: function() {
@@ -73,8 +73,14 @@ export default {
                     if (ret.code == 1) {
                         if (ret.result == true) {
                             callback('用户名已存在');
+                        } else {
+                            callback();
                         }
+                    } else {
+                        callback('用户名检测异常');
                     }
+                }).catch(err => {
+                    callback('用户名检测异常');
                 });
             }
         };
@@ -86,8 +92,14 @@ export default {
                     if (ret.code == 1) {
                         if (ret.result == true) {
                             callback('手机号已存在');
+                        } else {
+                            callback();
                         }
+                    } else {
+                        callback('手机号检测异常');
                     }
+                }).catch(err => {
+                    callback('手机号检测异常');
                 });
             }
         };
@@ -99,8 +111,14 @@ export default {
                     if (ret.code == 1) {
                         if (ret.result == true) {
                             callback('身份证号已存在');
+                        } else {
+                            callback();
                         }
+                    } else {
+                        callback('身份证号检测异常');
                     }
+                }).catch(err => {
+                    callback('身份证号检测异常');
                 });
             }
         };
@@ -192,7 +210,7 @@ export default {
     line-height: 50px;
     text-align: center;
     font-size: 20px;
-    color: #fff;
+    color: #333;
     border-bottom: 1px solid #ddd;
 }
 
@@ -224,6 +242,6 @@ export default {
 .login-tips {
     font-size: 12px;
     line-height: 30px;
-    color: #fff;
+    color: #333;
 }
 </style>

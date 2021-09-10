@@ -18,7 +18,7 @@ Vue.prototype.$CommonUtils = CommonUtils;
 
 //使用钩子函数对路由进行权限跳转
 router.beforeEach((to, from, next) => {
-    document.title = `${to.meta.title} | vue-manage-system`;
+    document.title = `考试运营管理服务平台 | ${to.meta.title}`;
     const user = store.state.system.user;
     if (!user && to.path !== '/login') {
         if (to.path == '/register') {

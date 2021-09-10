@@ -9,13 +9,14 @@
         <el-table-column
             :prop="obj.key"
             :label="obj.val"
+            :width="obj.key == 'number'?'60':obj.width?obj.width:'auto'"
             v-for="obj in templateData" show-overflow-tooltip>
             <!--操作栏-->
             <template v-if="obj.key == 'actives'" v-slot="rowData">
                 <el-link type="primary" v-for="active in rowData.row.actives"
-                         @click="invokeEvent(active.eventName,rowData.row.id)"
-                         style="margin-right: 10px;">
-                    {{ active.name }}
+                         v-if="hasPermission(active.permission)"
+                         @click="invokeEvent(active.eventName,rowData.row.id)">
+                    {{ active.name }}&nbsp;
                 </el-link>
             </template>
             <!--字典展示-->
@@ -40,6 +41,9 @@ export default {
     methods: {
         invokeEvent(eventName, data) {
             this.$emit(eventName, data);
+        },
+        hasPermission(perm) {
+            return this.$CommonUtils.hasPermission(perm);
         }
     },
     created() {

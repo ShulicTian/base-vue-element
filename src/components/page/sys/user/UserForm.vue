@@ -1,9 +1,9 @@
 <template>
-    <common-form ref="userForm" :target-data="userData" :template-data="templateData" :rules="rules" @save="saveUser" />
+    <common-form ref="userForm" :rules="rules" :target-data="userData" :template-data="templateData" @save="saveUser" />
 </template>
 
 <script>
-import { roleList, saveUser } from 'api/system';
+import { findRoleList, saveUser } from 'api/system';
 import CommonForm from 'components/common/CommonForm';
 
 export default {
@@ -46,7 +46,7 @@ export default {
                 ],
                 username: [
                     { required: true, message: '请输入用户名', trigger: 'blur' },
-                    { min: 6, max: 20, message: '账号必须为6-20位', trigger: 'blur' }
+                    { min: 4, max: 20, message: '账号必须为4-20位', trigger: 'blur' }
                 ],
                 password: [
                     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -64,6 +64,7 @@ export default {
                     { max: 18, message: '长度最多不能超过18', trigger: 'blur' }
                 ],
                 mobile: [
+                    { required: true, message: '请输入手机号', trigger: 'blur' },
                     { max: 11, min: 11, message: '手机号必须为11位号码', trigger: 'blur' }
                 ],
                 roleIdList: [
@@ -78,6 +79,9 @@ export default {
     methods: {
         saveUser(user) {
             // this.$emit('saved');
+            if (user.idCard == '') {
+                user.idCard = user.mobile;
+            }
             saveUser(user).then(ret => {
                 if (ret.code == 1) {
                     this.$message.success('保存用户成功');
@@ -85,12 +89,10 @@ export default {
                 } else {
                     this.$message.warning('保存用户失败');
                 }
-            }).catch(err => {
-                this.$message.warning('请求异常');
             });
         },
         async requestRoleList() {
-            await this.$store.dispatch('system/requestRoleList').then(ret => {
+            await findRoleList({ usable: 1 }).then(ret => {
                 this.templateData.filter(temp => temp.key == 'roleIdList')[0].data = ret.result;
             });
         },

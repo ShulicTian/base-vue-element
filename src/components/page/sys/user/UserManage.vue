@@ -1,34 +1,34 @@
 <template>
-    <el-tabs type="border-card" v-model="activeName" @tab-click="handleClick">
+    <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick">
         <el-tab-pane label="用户列表" name="list">
             <common-table-filter :template-data="filterTemplateData" @search="search" />
             <div style="text-align: right;padding-bottom: 10px;float: right;">
                 <el-pagination
-                    background
-                    layout="total, prev, pager, next"
+                    :current-page.sync="params.page"
                     :page-size="params.size"
                     :total="total"
-                    :current-page.sync="params.page"
+                    background
+                    layout="total, prev, pager, next"
                     @current-change="changePage"
                 >
                 </el-pagination>
             </div>
-            <common-table style="width: 100%;" :template-data="templateData" :table-data="tableData"
-                          @remove="removeUser" @edit="editUser" />
+            <common-table :table-data="tableData" :template-data="templateData" style="width: 100%;"
+                          @edit="editUser" @remove="removeUser" />
             <div style="text-align: left;padding-top: 15px;">
                 <el-pagination
-                    background
-                    layout="total, prev, pager, next"
+                    :current-page.sync="params.page"
                     :page-size="params.size"
                     :total="total"
-                    :current-page.sync="params.page"
+                    background
+                    layout="total, prev, pager, next"
                     @current-change="changePage"
                 >
                 </el-pagination>
             </div>
         </el-tab-pane>
-        <el-tab-pane :label="addLabel" name="add">
-            <user-form ref="userForm" style="width: 50%;" @saved="saved" :user-data="userData" />
+        <el-tab-pane v-if="this.$CommonUtils.hasPermission('sys:user:edit')" :label="addLabel" name="add">
+            <user-form ref="userForm" :user-data="userData" style="width: 50%;" @saved="saved" />
         </el-tab-pane>
     </el-tabs>
 </template>
@@ -40,7 +40,7 @@ import UserForm from 'components/page/sys/user/UserForm';
 import CommonTableFilter from 'components/common/CommonTableFilter';
 
 export default {
-    name: 'UserManager',
+    name: 'UserManage',
     components: { UserForm, CommonTable, CommonTableFilter },
     data: function() {
         return {
@@ -62,7 +62,7 @@ export default {
                 { key: 'mobile', val: '手机号', type: 'number' },
                 {
                     key: 'actives', val: '', data: [
-                        { name: '查询', eventName: 'search', type: 'primary' }
+                        { name: '查询', eventName: 'search', type: 'primary', permission: 'sys:user:view' }
                     ], type: 'button'
                 }
             ],
@@ -105,20 +105,32 @@ export default {
             this.getUserList();
         },
         removeUser(id) {
-            removeUser({ id: id }).then(ret => {
-                if (ret.code == 1) {
-                    this.$message.success('删除用户成功');
-                    this.getUserList();
-                } else {
-                    this.$message.warning('删除用户失败');
-                }
-            }).catch(err => {
-                this.$message.warning('请求异常');
+            this.$confirm('删除后数据将无法恢复，确认删除?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                removeUser({ id: id }).then(ret => {
+                    if (ret.code == 1) {
+                        this.$message.success('删除用户成功');
+                        this.getUserList();
+                    } else {
+                        this.$message.warning('删除用户失败');
+                    }
+                }).catch(err => {
+                    this.$message.warning('请求异常');
+                });
+            }).catch(() => {
+                this.$message.warning('已取消删除');
             });
         },
         editUser(id) {
             this.activeName = 'add';
-            this.userData = this.$CommonUtils.cloneObj(this.tableData.filter(user => user.id == id)[0]);
+            let userData = this.$CommonUtils.cloneObj(this.tableData.filter(user => user.id == id)[0]);
+            if (!userData.roleIdList) {
+                userData.roleIdList = [2];
+            }
+            this.userData = userData;
             this.userData.password = '';
             this.addLabel = '修改用户';
         },
@@ -134,15 +146,13 @@ export default {
                 } else {
                     this.$message.warning('获取用户列表失败');
                 }
-            }).catch(err => {
-                this.$message.error('请求异常');
             });
         },
         handleList(list) {
             list.forEach(menu => {
                 menu.actives = [
-                    { name: '修改', eventName: 'edit' },
-                    { name: '删除', eventName: 'remove' }
+                    { name: '修改', eventName: 'edit', permission: 'sys:user:edit' },
+                    { name: '删除', eventName: 'remove', permission: 'sys:user:edit' }
                 ];
             });
             return list;

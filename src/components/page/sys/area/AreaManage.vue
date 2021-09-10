@@ -9,7 +9,7 @@
                                     @edit="editArea"
                                     @remove="removeArea" />
         </el-tab-pane>
-        <el-tab-pane label="添加区域" name="add">
+        <el-tab-pane v-if="this.$CommonUtils.hasPermission('sys:area:edit')" label="添加区域" name="add">
             <area-form ref="areaForm" :area-data="areaData" @saveArea="saveArea" @cancelSave="activeName = 'list'"
                        style="width: 50%;" :tree-data="tableData" />
         </el-tab-pane>
@@ -28,7 +28,7 @@ import AreaForm from 'components/page/sys/area/AreaForm';
 import CommonLazyTreeTable from 'components/common/CommonLazyTreeTable';
 
 export default {
-    name: 'AreaManager',
+    name: 'AreaManage',
     components: {
         CommonLazyTreeTable,
         AreaForm
@@ -39,7 +39,7 @@ export default {
                 { key: 'name', val: '区域名称' },
                 { key: 'code', val: '区域编码' },
                 { key: 'sort', val: '排序' },
-                { key: 'type', val: '区域类型', dict: 'area_type' },
+                { key: 'type', val: '区域类型', type: 'dict', dict: 'area_type' },
                 { key: 'actives', val: '操作' }
             ],
             tableData: [],
@@ -104,27 +104,11 @@ export default {
         },
         editArea(id) {
             this.showForm = true;
-            let area = this.$CommonUtils.cloneObj(this.getById(this.tableData, id));
+            let area = this.$CommonUtils.cloneObj(this.$CommonUtils.getById(this.tableData, id));
             area.isShow = area.isShow == 1 ? true : false;
             this.areaData = area;
             this.dialogTitle = '修改区域';
             this.resetForm();
-        },
-        getById(list, id) {
-            let areaObj = {};
-            for (let i = 0; i < list.length; i++) {
-                if (list[i].id == id) {
-                    areaObj = list[i];
-                    break;
-                }
-                if (list[i].children && list[i].children.length > 0) {
-                    areaObj = this.getById(list[i].children, id);
-                    if (areaObj.id) {
-                        break;
-                    }
-                }
-            }
-            return areaObj;
         },
         async getAreaList() {
             await this.$store.dispatch('system/requestAreaList').then(ret => {
@@ -142,9 +126,9 @@ export default {
             if (list.length > 0) {
                 list.forEach(area => {
                     area.actives = [
-                        { name: '修改', eventName: 'edit' },
-                        { name: '删除', eventName: 'remove' },
-                        { name: '添加下级区域', eventName: 'add' }
+                        { name: '修改', eventName: 'edit', permission: 'sys:area:edit' },
+                        { name: '删除', eventName: 'remove', permission: 'sys:area:edit' },
+                        { name: '添加下级区域', eventName: 'add', permission: 'sys:area:edit' }
                     ];
                 });
                 let root = list.filter(area => area.id == 0)[0];

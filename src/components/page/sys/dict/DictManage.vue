@@ -27,7 +27,7 @@
                 </el-pagination>
             </div>
         </el-tab-pane>
-        <el-tab-pane :label="addLabel" name="add">
+        <el-tab-pane v-if="this.$CommonUtils.hasPermission('sys:dict:edit')" :label="addLabel" name="add">
             <dict-form ref="dictForm" style="width: 50%;" @saved="saved" :dict-data="dictData" />
         </el-tab-pane>
     </el-tabs>
@@ -40,7 +40,7 @@ import DictForm from 'components/page/sys/dict/DictForm';
 import CommonTableFilter from 'components/common/CommonTableFilter';
 
 export default {
-    name: 'DictManager',
+    name: 'DictManage',
     components: { DictForm, CommonTable, CommonTableFilter },
     data: function() {
         return {
@@ -61,7 +61,7 @@ export default {
                 { key: 'label', val: '标签名', type: 'text' },
                 {
                     key: 'actives', val: '', data: [
-                        { name: '查询', eventName: 'search', type: 'primary' }
+                        { name: '查询', eventName: 'search', type: 'primary', permission: 'sys:dict:view' }
                     ], type: 'button'
                 }
             ],
@@ -146,9 +146,9 @@ export default {
         handleList(list) {
             list.forEach(menu => {
                 menu.actives = [
-                    { name: '修改', eventName: 'edit' },
-                    { name: '删除', eventName: 'remove' },
-                    { name: '追加', eventName: 'addTo' }
+                    { name: '修改', eventName: 'edit', permission: 'sys:dict:edit' },
+                    { name: '删除', eventName: 'remove', permission: 'sys:dict:edit' },
+                    { name: '追加', eventName: 'addTo', permission: 'sys:dict:edit' }
                 ];
             });
             return list;

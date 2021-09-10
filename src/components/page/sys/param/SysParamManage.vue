@@ -1,6 +1,6 @@
 <template>
     <el-tabs type="border-card" v-model="activeName" @tab-click="handleClick">
-        <el-tab-pane label="角色列表" name="list">
+        <el-tab-pane label="参数列表" name="list">
             <common-table-filter :template-data="filterTemplateData" @search="search" />
             <div style="text-align: right;padding-bottom: 10px;">
                 <el-pagination
@@ -14,7 +14,7 @@
                 </el-pagination>
             </div>
             <common-table style="width: 100%;" :template-data="templateData" :table-data="tableData"
-                          @remove="removeRole" @edit="editRole" />
+                          @remove="removeParam" @edit="editParam" />
             <div style="text-align: left;padding-top: 15px;">
                 <el-pagination
                     background
@@ -27,44 +27,45 @@
                 </el-pagination>
             </div>
         </el-tab-pane>
-        <el-tab-pane :label="addLabel" name="add">
-            <role-form ref="roleForm" style="width: 50%;" @saved="saved" :role-data="roleData" />
+        <el-tab-pane v-if="this.$CommonUtils.hasPermission('sys:param:edit')" :label="addLabel" name="add">
+            <sys-param-form ref="paramForm" style="width: 50%;" @saved="saved" :param-data="paramData" />
         </el-tab-pane>
     </el-tabs>
 </template>
 
 <script>
-import { removeRole, roleList } from 'api/system';
+import { paramList, removeParam } from 'api/system';
 import CommonTable from 'components/common/CommonTable';
-import RoleForm from 'components/page/sys/role/RoleForm';
+import SysParamForm from 'components/page/sys/param/SysParamForm';
 import CommonTableFilter from 'components/common/CommonTableFilter';
 
 export default {
-    name: 'RoleManager',
-    components: { RoleForm, CommonTable, CommonTableFilter },
+    name: 'SysParamManage',
+    components: { SysParamForm, CommonTable, CommonTableFilter },
     data: function() {
         return {
             activeName: 'list',
-            addLabel: '添加角色',
+            addLabel: '添加参数',
             templateData: [
-                { key: 'number', val: '序号' },
-                { key: 'name', val: '角色名称' },
-                { key: 'enName', val: '英文名称' },
-                {
-                    key: 'roleType',
-                    val: '类型',
-                    dict: 'role_type'
-                },
+                { key: 'type', val: '类型', type: 'dict', dict: 'sys_param_type' },
+                { key: 'paramName', val: '参数名称' },
+                { key: 'paramValue', val: '参数值' },
+                { key: 'paramDesc', val: '描述' },
                 { key: 'actives', val: '操作' }
             ],
             tableData: [],
-            roleData: {},
+            paramData: {},
             filterTemplateData: [
-                { key: 'name', val: '角色名称', type: 'text' },
-                { key: 'enName', val: '英文名', type: 'text' },
+                {
+                    key: 'type',
+                    val: '类型',
+                    type: 'select',
+                    data: this.$CommonUtils.dictToSelectorByType('sys_param_type')
+                },
+                { key: 'paramName', val: '参数名', type: 'text' },
                 {
                     key: 'actives', val: '', data: [
-                        { name: '查询', eventName: 'search', type: 'primary' }
+                        { name: '查询', eventName: 'search', type: 'primary', permission: 'sys:param:view' }
                     ], type: 'button'
                 }
             ],
@@ -77,57 +78,58 @@ export default {
     },
     methods: {
         search(params) {
-            this.params.name = params.name;
-            this.params.enName = params.enName;
-            this.getRoleList();
+            this.params.paramName = params.paramName;
+            this.params.type = params.type;
+            this.getParamList();
         },
         changePage() {
-            this.getRoleList();
+            this.getParamList();
         },
-        initRoleData() {
-            this.roleData = {
+        initParamData() {
+            this.paramData = {
                 id: -1,
-                name: '',
-                enName: '',
-                roleType: '0',
-                menuIdList: []
+                type: '',
+                paramName: '',
+                paramValue: '',
+                paramDesc: '',
+                sort: 0
             };
         },
         saved() {
             this.activeName = 'list';
-            this.addLabel = '添加角色';
-            this.initRoleData();
-            this.getRoleList();
+            this.addLabel = '添加参数';
+            this.initParamData();
+            this.getParamList();
         },
-        removeRole(id) {
-            removeRole({ id: id }).then(ret => {
+        removeParam(id) {
+            removeParam({ id: id }).then(ret => {
                 if (ret.code == 1) {
-                    this.$message.success('删除角色成功');
-                    this.getRoleList();
+                    this.$message.success('删除参数成功');
+                    this.getParamList();
                 } else {
-                    this.$message.warning('删除角色失败');
+                    this.$message.warning('删除参数失败');
                 }
             }).catch(err => {
                 this.$message.warning('请求异常');
             });
         },
-        editRole(id) {
+        editParam(id) {
             this.activeName = 'add';
-            this.roleData = this.$CommonUtils.cloneObj(this.tableData.filter(user => user.id == id)[0]);
-            this.addLabel = '修改角色';
-            this.handleChecked();
+            this.paramData = this.$CommonUtils.cloneObj(this.tableData.filter(user => user.id == id)[0]);
+            this.addLabel = '修改参数';
+            this.resetForm();
         },
-        async getRoleList() {
-            await roleList(this.params).then(ret => {
+        async getParamList() {
+            await paramList(this.params).then(ret => {
                 if (ret.code == 1) {
                     if (ret['result']) {
                         this.tableData = this.handleList(ret.result.content);
                         this.total = ret.result.totalElements;
                     } else {
-                        this.$message.warning('角色列表为空');
+                        this.$message.warning('参数列表为空');
                     }
                 } else {
-                    this.$message.warning('获取角色列表失败');
+                    this.$message.warning('获取参数列表失败');
                 }
             }).catch(err => {
                 this.$message.error('请求异常');
@@ -136,29 +138,28 @@ export default {
         handleList(list) {
             list.forEach(menu => {
                 menu.actives = [
-                    { name: '修改', eventName: 'edit' },
-                    { name: '删除', eventName: 'remove' }
+                    { name: '修改', eventName: 'edit', permission: 'sys:param:edit' },
+                    { name: '删除', eventName: 'remove', permission: 'sys:param:edit' }
                 ];
             });
             return list;
         },
         handleClick() {
-            this.addLabel = '添加角色';
-            this.initRoleData();
+            this.addLabel = '添加参数';
+            this.initParamData();
             if (this.activeName == 'add') {
-                this.handleChecked();
+                this.resetForm();
             }
         },
-        handleChecked() {
-            if (this.$refs['roleForm']) {
-                this.$refs.roleForm.handleChecked(this.roleData);
-                this.$refs.roleForm.resetForm();
+        resetForm() {
+            if (this.$refs['paramForm']) {
+                this.$refs.paramForm.resetForm();
             }
         }
     },
     created() {
-        this.initRoleData();
-        this.getRoleList();
+        this.initParamData();
+        this.getParamList();
     }
 };
 </script>

@@ -3,7 +3,7 @@ import request from '../utils/request';
 //登录
 export const login = data => {
     return request({
-        url: '/osmp/sys/system/login?sys_cookie=true',
+        url: '/osmp/sys/system/login',
         method: 'post',
         data: data
     });
@@ -14,6 +14,7 @@ export const logout = query => {
     return request({
         url: '/osmp/sys/system/logout',
         method: 'get',
+        data: {},
         params: query
     });
 };
@@ -32,7 +33,7 @@ export const isExist = data => {
     return request({
         url: '/osmp/sys/user/isExist',
         method: 'post',
-        data: data,
+        data: data
 
     });
 };
@@ -41,8 +42,9 @@ export const isExist = data => {
 export const getMenuList = data => {
     return request({
         url: '/osmp/sys/menu/getMenuList',
-        method: 'post',
-        data: data
+        method: 'POST',
+        data: data,
+        params: { examId: data.examId || null }
     });
 };
 
@@ -89,6 +91,24 @@ export const userList = data => {
     });
 };
 
+//获取用户列表
+export const findListBySelector = data => {
+    return request({
+        url: '/osmp/sys/user/findListBySelector',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取用户列表
+export const userListByColumn = data => {
+    return request({
+        url: '/osmp/sys/user/findList',
+        method: 'post',
+        data: data
+    });
+};
+
 //保存用户
 export const saveUser = data => {
     return request({
@@ -128,6 +148,24 @@ export const removeUser = data => {
 export const roleList = data => {
     return request({
         url: '/osmp/sys/role/list',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取角色列表-分页
+export const roleListBy = data => {
+    return request({
+        url: '/osmp/sys/role/list',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取角色列表
+export const findRoleList = data => {
+    return request({
+        url: '/osmp/sys/role/findList',
         method: 'post',
         data: data
     });
@@ -246,11 +284,175 @@ export const saveParam = data => {
     });
 };
 
+//保存系统参数
+export const getParam = data => {
+    return request({
+        url: '/osmp/sys/param/get',
+        method: 'post',
+        data: data
+    });
+};
+
 //获取日志列表-分页
 export const logList = data => {
     return request({
         url: '/osmp/sys/log/list',
         method: 'post',
         data: data
+    });
+};
+
+//获取实体列表
+export const entityList = data => {
+    return request({
+        url: '/osmp/sys/generate/entityList',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取代码生成记录列表
+export const fastGenerateList = data => {
+    return request({
+        url: '/osmp/sys/generate/list',
+        method: 'post',
+        data: data
+    });
+};
+
+//保存并生成代码
+export const saveFastGenerate = data => {
+    return request({
+        url: '/osmp/sys/generate/save',
+        method: 'post',
+        data: data
+    });
+};
+
+//保存公告
+export const saveBulletin = data => {
+    return request({
+        url: '/osmp/system/bulletin/save',
+        method: 'post',
+        data: data
+    });
+};
+
+//更新公告状态
+export const updateBulletinStatus = data => {
+    return request({
+        url: '/osmp/system/bulletin/updateBulletinStatus',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取公告列表-分页
+export const bulletinList = data => {
+    return request({
+        url: '/osmp/system/bulletin/list',
+        method: 'post',
+        data: data
+    });
+};
+
+//删除公告
+export const removeBulletin = data => {
+    return request({
+        url: '/osmp/system/bulletin/delete/' + data.id,
+        method: 'DELETE'
+    });
+};
+
+//通用Post请求
+export const commonPostRequest = (url, data) => {
+    return request({
+        url: url,
+        method: 'POST',
+        data: data
+    });
+};
+
+//同步人员
+export const saveDeptPersonnel = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/saveDeptPersonnel',
+        method: 'post',
+        data: data,
+        timeout: 1000000
+    });
+};
+
+//批量添加人员人员
+export const savePersonnelBatch = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/savePersonnelBatch',
+        method: 'post',
+        data: data,
+        timeout: 1000000
+    });
+};
+
+//获取企业通讯录部门列表
+export const getDeptList = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/getDeptList',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取企业通讯录部门下人员
+export const getPersonnelListByDeptId = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/getPersonnelListByDeptId',
+        method: 'post',
+        data: data
+    });
+};
+
+//从部门移除人员
+export const removePersonnel = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/removePersonnel',
+        method: 'post',
+        data: data
+    });
+};
+
+//彻底删除人员
+export const deletePersonnel = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/deletePersonnel',
+        method: 'post',
+        data: data
+    });
+};
+
+//删除部门 子部门 并移除人员
+export const deleteDept = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/deleteDept',
+        method: 'post',
+        data: data,
+        timeout: 100000
+    });
+};
+
+//发送消息
+export const sendMessage = data => {
+    return request({
+        url: '/osmp/wechat/message/sendMessage',
+        method: 'post',
+        data: data
+    });
+};
+
+//获取企业二维码
+export const getQrcodeUrl = data => {
+    return request({
+        url: '/osmp/wechat/addressBook/getQrcodeUrl',
+        method: 'post',
+        params: data
     });
 };

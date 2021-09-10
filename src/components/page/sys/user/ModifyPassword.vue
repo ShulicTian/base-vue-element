@@ -1,8 +1,8 @@
 <template>
-    <el-tabs type="border-card" v-model="activeName">
+    <el-tabs v-model="activeName" type="border-card">
         <el-tab-pane label="修改密码" name="info">
-            <common-form style="width: 50%;" ref="userForm" :target-data="userData" :template-data="templateData"
-                         :rules="rules"
+            <common-form ref="userForm" :rules="rules" :target-data="userData" :template-data="templateData"
+                         style="width: 50%;"
                          @save="updatePassword" />
         </el-tab-pane>
     </el-tabs>
@@ -10,9 +10,7 @@
 
 <script>
 import CommonForm from 'components/common/CommonForm';
-import { updatePassword } from 'api/system';
-import store from '@/store';
-import router from '@/router';
+import { logout, updatePassword } from 'api/system';
 
 export default {
     name: 'ModifyPassword',
@@ -64,14 +62,26 @@ export default {
             updatePassword(user).then(ret => {
                 if (ret.code == 1) {
                     this.$message.success('修改密码成功，请重新登录');
-                    this.$store.commit('system/cleanCache');
-                    router.push('/login');
+                    this.logout();
 
                 } else {
                     this.$message.warning('修改密码失败');
                 }
             }).catch(err => {
                 this.$message.warning('请求异常');
+            });
+        },
+        logout() {
+            logout().then(res => {
+                this.$store.commit('system/cleanUser');
+                this.$router.push('/login').then(() => {
+                    this.$store.commit('system/cleanCache');
+                });
+            }).catch(err => {
+                this.$store.commit('system/cleanUser');
+                this.$router.push('/login').then(() => {
+                    this.$store.commit('system/cleanCache');
+                });
             });
         }
     },

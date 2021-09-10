@@ -1,20 +1,28 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import system from './modules/system';
+import file from './modules/file';
 
 Vue.use(Vuex);
 
-const modules = { system };
+const modules = {
+    system,
+    file
+};
 
 export default new Vuex.Store({
     plugins: [],
     state: {
         direction: 'slide-fade', // 页面切换方向
-        sysName: '运营支撑管理平台2.0'
+        sysName: '考试运营管理服务平台'
     },
     getters: {
         userData(state, getters) {
             return state.system.user;
+            // return getters['user/user']
+        },
+        getSysName(state) {
+            return state.sysName;
             // return getters['user/user']
         }
         // vuex 全局getters引入局部
@@ -28,7 +36,6 @@ export default new Vuex.Store({
             state.direction = direction;
         }
     },
-    actions: {
-    },
+    actions: {},
     modules
 });

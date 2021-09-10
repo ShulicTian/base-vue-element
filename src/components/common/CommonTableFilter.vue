@@ -1,34 +1,58 @@
 <template>
     <el-form ref="filterForm" :model="formData" class="demo-ruleForm">
-        <el-form-item style="float: left;margin-bottom: 0;margin-bottom: 10px;"
-                      :label-width="temp.type=='button'?'15px':'80px'"
-                      :label="temp.val" :prop="temp.key" v-for="temp in templateData">
+        <el-form-item v-for="temp in templateData"
+                      :label="temp.val"
+                      :label-width="temp.type=='button'?'15px':'90px'" :prop="temp.key"
+                      style="float: left;margin-bottom: 0;margin-bottom: 10px;">
             <!--时间选择器-->
-            <el-date-picker type="date" placeholder="选择日期" v-model="formData[temp.key]" v-if="temp.type=='date'" />
+            <el-date-picker v-if="temp.type=='date'" v-model="formData[temp.key]" placeholder="选择日期" type="date" />
             <!--单选下拉框-->
-            <el-select @clear="clearSelect(temp.key)" clearable filterable v-model="formData[temp.key]"
-                       :placeholder="'请选择'+temp.val" v-else-if="temp.type=='select'">
-                <el-option :label="opt.name" :value="opt.id" v-for="opt in temp.data"></el-option>
+            <el-select v-else-if="temp.type=='select'" v-model="formData[temp.key]" :placeholder="'请选择'+temp.val"
+                       :style="{width:(temp.width?temp.width:200)+'px'}"
+                       clearable
+                       filterable @clear="clearSelect(temp.key)">
+                <el-option v-for="opt in temp.data" :label="opt.name"
+                           :value="opt.id"></el-option>
+            </el-select>
+            <el-select v-else-if="temp.type==='dict'" v-model="formData[temp.key]" :placeholder="'请选择'+temp.val"
+                       :style="{width:(temp.width?temp.width:200)+'px'}"
+                       clearable
+                       filterable @clear="clearSelect(temp.key)">
+                <el-option v-for="opt in getDictSelectData(temp.dict)" :label="opt.name"
+                           :value="opt.id"></el-option>
+            </el-select>
+            <!--字典单选下拉框-->
+            <el-select v-else-if="temp.type==='dict_select'" v-model="formData[temp.key]" :placeholder="'请选择'+temp.val"
+                       :style="{width:(temp.width?temp.width:200)+'px'}"
+                       clearable
+                       filterable @clear="clearSelect(temp.key)">
+                <el-option v-for="opt in temp.data" :label="opt.label" :value="opt.value"></el-option>
             </el-select>
             <!--单选下拉树-->
-            <el-select @clear="clearSelect(temp.key)" clearable filterable v-model="formData[temp.key]"
-                       :placeholder="'请选择'+temp.val" v-else-if="temp.type=='selectTree'">
+            <el-select v-else-if="temp.type=='selectTree'" v-model="formData[temp.key]" :placeholder="'请选择'+temp.val"
+                       clearable
+                       filterable @clear="clearSelect(temp.key)">
                 <el-tree
                     :data="temp.data"
-                    default-expand-all
-                    :props="defaultProps">
-                        <span class="custom-tree-node" slot-scope="{ node, data }">
+                    :props="defaultProps"
+                    default-expand-all>
+                        <span slot-scope="{ node, data }" class="custom-tree-node">
                             <el-option :label="data.name" :value="data.id"></el-option>
                         </span>
                 </el-tree>
             </el-select>
             <!--按钮-->
             <div v-else-if="temp.type=='button'">
-                <el-button :type="item.type" @click="invokeEvent(item)" v-for="item in temp.data">{{ item.name }}
+                <el-button v-for="item in temp.data"
+                           v-if="hasPermission(item.permission)"
+                           :type="item.type"
+                           @click="invokeEvent(item)">
+                    {{ item.name }}
                 </el-button>
             </div>
             <!--输入框-->
-            <el-input :type="temp.type" v-model="formData[temp.key]" v-else />
+            <el-input v-else v-model="formData[temp.key]" :style="{width:(temp.width?temp.width:200)+'px'}"
+                      :type="temp.type" clearable />
         </el-form-item>
     </el-form>
 </template>
@@ -37,7 +61,8 @@
 export default {
     name: 'CommonTableFilter',
     props: {
-        templateData: Array
+        templateData: Array,
+        defaultData: Object
     },
     data: function() {
         return {
@@ -49,6 +74,9 @@ export default {
         };
     },
     methods: {
+        getDictSelectData(dict) {
+            return this.$CommonUtils.dictToSelectorByType(dict);
+        },
         clearSelect(key) {
             this.formData[key] = null;
         },
@@ -60,12 +88,25 @@ export default {
         },
         resetForm() {
             this.getRefByKey('filterForm').resetFields();
+        },
+        hasPermission(perm) {
+            return this.$CommonUtils.hasPermissionByMul(perm);
+        },
+        initData(val) {
+            if (val) {
+                for (let key in val) {
+                    this.formData[key] = val[key];
+                }
+            }
         }
     },
     created() {
+        this.initData(this.defaultData);
+    },
+    watch: {
+        defaultData(val) {
+            this.initData(val);
+        }
     }
 };
 </script>
-
-<style scoped>
-</style>

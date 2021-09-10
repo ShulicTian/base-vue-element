@@ -20,7 +20,13 @@ export default {
                     type: 'radio',
                     data: this.$CommonUtils.dictToSelectorByType('role_type')
                 },
-                { key: 'menuIdList', val: '角色权限', type: 'treeCheckout', data: [] },
+                {
+                    key: 'usable',
+                    val: '是否可用',
+                    type: 'radio',
+                    data: this.$CommonUtils.dictToSelectorByType('role_usable')
+                },
+                { key: 'menuIdList', val: '角色权限', type: 'treeCheckbox', data: [] },
                 {
                     key: 'actives', val: '', data: [
                         { name: '保存', eventName: 'save', type: 'primary' }
@@ -47,6 +53,11 @@ export default {
     },
     methods: {
         saveRole(role) {
+            let nodes = role.menuIdList;
+            let otherTypeMenuIds = role.menuList ? role.menuList.filter(menu => menu.type != '0').map(menu => menu.id) : [];
+            if (nodes && nodes['checkedKeys']) {
+                role.menuIdList = nodes.checkedKeys.concat(nodes.halfCheckedKeys).concat(otherTypeMenuIds);
+            }
             saveRole(role).then(ret => {
                 if (ret.code == 1) {
                     this.$message.success('保存角色成功');
@@ -59,7 +70,7 @@ export default {
             });
         },
         async requestMenuList() {
-            await this.$store.dispatch('system/requestMenuList').then(ret => {
+            await this.$store.dispatch('system/requestMenuList', {}).then(ret => {
                 this.templateData.filter(temp => temp.key == 'menuIdList')[0].data = ret.result;
             });
         },
@@ -69,7 +80,7 @@ export default {
                 if (data['menuList'] && data.menuList.length > 0) {
                     let parentIds = data.menuList.map(obj => obj.parentId);
                     let ids = data.menuIdList.filter(id => parentIds.indexOf(id) == -1);
-                    ref[0].setCheckedKeys(ids);
+                    ref[0].setCheckedKeys(ids, true);
                 } else {
                     ref[0].setCheckedKeys([]);
                 }
