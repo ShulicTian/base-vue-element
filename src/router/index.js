@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import system from '@/router/modules/system';
+import demo from '@/router/modules/demo';
 
 Vue.use(Router);
 
@@ -38,7 +39,7 @@ export default new Router({
                     path: '/system',
                     component: () => import('components/page/index.vue'),
                     meta: {title: '系统管理'},
-                    children: [...system]
+                    children: [...system, ...demo]
                 }
             ]
         },
